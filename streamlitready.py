@@ -10,27 +10,190 @@ import numpy as np
 # ML imports will be lazy-loaded inside functions to avoid startup crashes
 # (sentence-transformers, spacy, torch, sklearn etc.)
 
-st.set_page_config(page_title="ATS Dashboard — Resume & Cover Letter Generator",
-                   page_icon="📄",
+st.set_page_config(page_title="SENSAI — Professional Document Suite",
                    layout="wide",
                    initial_sidebar_state="expanded")
 
 
 # ---------------- Styling ----------------
-st.markdown(
-    """
-    <style>
-    .stApp { background-color: #0e1117; color: #e6edf3; }
-    .card {
-        background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01));
-        padding: 1rem; border-radius: 12px; box-shadow: 0 4px 18px rgba(2,6,23,0.6);
-        border: 1px solid rgba(255,255,255,0.03);
-    }
-    .muted { color: #9aa4b2; font-size: 0.9rem; }
-    </style>
-    """,
-    unsafe_allow_html=True,
-)
+st.markdown("""
+<style>
+
+/*
+   ROOT COLORS
+    */
+:root {
+    --primary-text: #D4D4D4;        /* Main text color - VS Code light gray */
+    --secondary-text: #9E9E9E;      /* Secondary text / placeholders */
+    --accent-blue: #569CD6;         /* For headings, highlights */
+    --accent-cyan: #4EC9B0;         /* For subtle highlights */
+    --input-bg: #252526;            /* Input field background */
+    --sidebar-bg: #1E1E1E;          /* Sidebar background */
+    --sidebar-text: #CCCCCC;        /* Sidebar labels text */
+}
+
+/* ==============================
+   APP BACKGROUND
+   ============================== */
+html, body, .stApp {
+    background-color: #1E1E1E !important;   /* Dark theme base */
+    color: var(--primary-text) !important;
+    font-family: 'Segoe UI', sans-serif;
+}
+
+/* ==============================
+   SIDEBAR
+   ============================== */
+section[data-testid="stSidebar"] > div:first-child {
+    background-color: var(--sidebar-bg) !important;
+    color: var(--sidebar-text) !important;
+    padding: 20px 12px !important;
+    border-radius: 0px;  /* remove default dot/border */
+}
+
+/* Sidebar input boxes */
+section[data-testid="stSidebar"] input,
+section[data-testid="stSidebar"] textarea,
+section[data-testid="stSidebar"] select {
+    background-color: var(--input-bg) !important;
+    color: var(--primary-text) !important;
+    border: 1px solid #3C3C3C !important;
+    border-radius: 6px !important;
+    padding: 6px 10px !important;
+}
+
+/* Sidebar labels & text */
+section[data-testid="stSidebar"] label,
+section[data-testid="stSidebar"] p,
+section[data-testid="stSidebar"] span,
+section[data-testid="stSidebar"] div {
+    color: var(--sidebar-text) !important;
+}
+section[data-testid="stSidebar"] .stSelectbox > div svg {
+    fill: #569CD6 !important;  
+    width: 14px !important;
+    height: 14px !important;
+}
+
+/* Hover effect for selectbox */
+section[data-testid="stSidebar"] .stSelectbox > div:hover {
+    background-color: #2A2A2A !important;
+    cursor: pointer;
+}
+.stExpander, .stExpander > div {
+    background-color: #1E1E1E !important;  /* dark gray */
+    color: #D4D4D4 !important;
+}
+.stExpander summary {
+    color: #D4D4D4 !important;
+}
+
+/* Remove extra dark overlay when dropdown is opened */
+section[data-testid="stSidebar"] div[role="listbox"] {
+    background-color: #1E1E1E !important;
+    border: 1px solid #3C3C3C !important;
+    border-radius: 6px !important;
+}
+/* ==============================
+   MAIN HEADINGS
+   ============================== */
+.stApp .main-heading {
+    font-size: 56px;
+    font-weight: 900;
+    text-align: center;
+    color: #40E0D0 !important;  /* turquoise */
+    margin-top: 0px;
+}
+
+.sub-heading {
+    font-size: 22px;
+    font-weight: 500;
+    text-align: center;
+    color: var(--accent-blue) !important; /* secondary color for subheading */
+    margin-top: 0px;
+    margin-bottom: 20px;
+}
+
+/* ==============================
+   MAIN CONTENT TEXT
+   ============================== */
+.stApp label, 
+.stApp p, 
+.stApp span, 
+.stApp div {
+    color: var(--primary-text) !important;
+}
+
+/* Inputs in main content */
+.stTextInput input,
+.stTextArea textarea,
+.stSelectbox select {
+    background-color: var(--input-bg) !important;
+    color: #569CD6 !important;  /* blue text */
+    border: 1px solid #3C3C3C !important;
+    border-radius: 6px !important;
+    padding: 6px 10px !important;
+}
+
+/* ==============================
+   PREVIEW CARD
+   ============================== */
+.card, .card * {
+    color: var(--primary-text) !important;
+    background-color: #2A2A2A !important;
+    border-radius: 6px;
+    padding: 4px 8px !important;
+}
+
+/* Section titles (Candidate Information, Preview, etc.) */
+.stHeader, .stSubheader, h1, h2, h3, .stMarkdown h2, .stMarkdown h3 {
+    color: #FFFFFF !important;  /* white for section headings */
+}
+
+/* Subtle scrollbars for dark theme */
+::-webkit-scrollbar {
+    width: 8px;
+}
+::-webkit-scrollbar-track {
+    background: #1E1E1E;
+}
+::-webkit-scrollbar-thumb {
+    background-color: #555;
+    border-radius: 10px;
+    border: 2px solid #1E1E1E;
+}
+/* ==============================
+   Sidebar model select dropdown fix
+   ============================== */
+section[data-testid="stSidebar"] .stSelectbox > div svg {
+    fill: #569CD6 !important;   /* blue arrow */
+}
+
+section[data-testid="stSidebar"] div[role="listbox"] {
+    background-color: #1E1E1E !important;  /* dark background for dropdown options */
+    border: 1px solid #3C3C3C !important;
+    border-radius: 6px !important;
+}
+
+/* ==============================
+   Override specificity for headings
+   ============================== */
+.stApp .main-heading {
+    color: #40E0D0 !important;  /* turquoise main heading */
+}
+
+.stApp .stHeader,
+.stApp .stSubheader {
+    color: #FFFFFF !important;   /* white for Candidate Info, Preview, etc. */
+}
+
+</style>
+""", unsafe_allow_html=True)
+
+# ------------------------- DISPLAY HEADINGS -------------------------
+st.markdown('<div class="main-heading">SENSAI</div>', unsafe_allow_html=True)
+st.markdown('<div class="sub-heading">Professional Document Suite</div>', unsafe_allow_html=True) 
+
 
 # ---------------- Helpers ----------------
 def get_timestamp():
@@ -112,12 +275,11 @@ with st.sidebar:
 
 
 # ---------------- Main form ----------------
-st.title("📄 ATS Professional Dashboard (Dark)")
 
 left, right = st.columns([2,1])
 
 with left:
-    st.subheader("Candidate Information (Exact fields — same logic as your original script)")
+    st.subheader("Candidate Information")
     name = st.text_input("Enter your full name:", value=quick_name or "")
     email = st.text_input("Enter your email:", value=quick_email or "")
     mobile = st.text_input("Enter your mobile number:", value=quick_mobile or "")
